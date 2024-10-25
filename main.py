@@ -34,8 +34,9 @@ class MyClient(discord.Client):
         release = os.getenv("RELEASE")
         if(release == "True"):
             for(guild) in self.guilds:
-                self.tree.copy_global_to(guild=guild)
-                await self.tree.sync(guild=guild)
+                newguild = discord.Object(id=guild.id)
+                self.tree.copy_global_to(guild=newguild)
+                await self.tree.sync(guild=newguild)
         else: 
             self.tree.copy_global_to(guild=MY_GUILD)
             await self.tree.sync(guild=MY_GUILD)
