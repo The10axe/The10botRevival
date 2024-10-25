@@ -1,2 +1,2 @@
 discord[voice]
-dotenv
+python-dotenv
