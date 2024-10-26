@@ -111,7 +111,7 @@ async def show_join_date(interaction: discord.Interaction, member: discord.Membe
     message='Le message que je dois vous rappeler',
     globale='Si je dois vous le rappeler en global'
 )
-async def remind_me(interaction: discord.Interaction, remindmein: str, message: Optional[str] = None, globale: Optional[bool] = False):
+async def remind_me(interaction: discord.Interaction, remindmein: str, message: Optional[str] = None):
     """Reminds you with a message after a certain amount of time."""
     def parse_time_string(time_str: str) -> int:
         time_units = {
@@ -157,16 +157,16 @@ async def remind_me(interaction: discord.Interaction, remindmein: str, message: 
 
     formatted_time = format_time_string(remindmein_seconds)
     if(message == None):
-        await interaction.response.send_message(f'Je vais vous rappeler dans {formatted_time} secondes', ephemeral=globale, silent=True)
+        await interaction.response.send_message(f'Je vais vous rappeler dans {formatted_time} secondes', ephemeral=True, silent=True)
     else:
-        await interaction.response.send_message(f'Je vais vous rappeler dans {formatted_time} secondes avec le message : {message}', ephemeral=globale, silent=True)
+        await interaction.response.send_message(f'Je vais vous rappeler dans {formatted_time} secondes avec le message : {message}', ephemeral=True, silent=True)
     
     await asyncio.sleep(remindmein_seconds)
 
     if(message == None):
-        await interaction.followup.send(f"{interaction.user.mention} vous m'avez demander de vous rappeler maintenant", ephemeral=globale)
+        await interaction.user.send(f"{interaction.user.mention} vous m'avez demander de vous rappeler maintenant")
     else:
-        await interaction.followup.send(f"{interaction.user.mention} vous m'avez demander de vous rappeler: {message}", ephemeral=globale)
+        await interaction.user.send(f"{interaction.user.mention} vous m'avez demander de vous rappeler: {message}")
     
     
     
