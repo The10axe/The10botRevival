@@ -31,15 +31,9 @@ class MyClient(discord.Client):
 
     async def setup_hook(self):
         # This copies the global commands over to your guild.
-        release = os.getenv("RELEASE")
-        if(release == "True"):
-            for(guild) in self.guilds:
-                newguild = discord.Object(id=guild.id)
-                self.tree.copy_global_to(guild=newguild)
-                await self.tree.sync(guild=newguild)
-        else: 
-            self.tree.copy_global_to(guild=MY_GUILD)
-            await self.tree.sync(guild=MY_GUILD)
+        self.tree.copy_global_to(guild=MY_GUILD)
+        await self.tree.sync(guild=MY_GUILD)
+            
 
 intents = discord.Intents.default()
 # intents.message_content = True
@@ -50,6 +44,15 @@ client = MyClient(intents=intents)
 async def on_ready():
     print(f'Logged in as {client.user} (ID: {client.user.id})')
     print('------')
+    release = os.getenv("RELEASE")
+    if(release == "True"):
+        print("Release mode")
+        for guild in client.guilds:
+            client.tree.copy_global_to(guild=guild)
+            await client.tree.sync(guild=guild)
+    else: 
+        client.tree.copy_global_to(guild=MY_GUILD)
+        await client.tree.sync(guild=MY_GUILD)
 
 
 @client.tree.command()
