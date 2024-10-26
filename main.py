@@ -108,8 +108,7 @@ async def show_join_date(interaction: discord.Interaction, member: discord.Membe
 @client.tree.command()
 @app_commands.describe(
     remindmein='Le temps dans lequel je dois vous rappeler',
-    message='Le message que je dois vous rappeler',
-    globale='Si je dois vous le rappeler en global'
+    message='Le message que je dois vous rappeler'
 )
 async def remind_me(interaction: discord.Interaction, remindmein: str, message: Optional[str] = None):
     """Reminds you with a message after a certain amount of time."""
@@ -147,7 +146,6 @@ async def remind_me(interaction: discord.Interaction, remindmein: str, message: 
         remindmein_seconds = parse_time_string_colon_format(remindmein)
     else:
         remindmein_seconds = parse_time_string(remindmein)
-    globale = not globale
     remindmein_seconds = parse_time_string(remindmein)
     def format_time_string(seconds: int) -> str:
         days, seconds = divmod(seconds, 86400)
