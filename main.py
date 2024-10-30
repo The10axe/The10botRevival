@@ -8,9 +8,16 @@ import os
 from dotenv import load_dotenv
 import re
 
+import logging
+from datetime import datetime
+
 load_dotenv()
 
 MY_GUILD = discord.Object(id=int(os.getenv('DISCORD_HOME_GUILD')))  # replace with your guild id
+
+log_filename = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+handler = logging.FileHandler(filename=f'{log_filename}.log', encoding='utf-8', mode='w')
+
 
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
@@ -42,73 +49,23 @@ client = MyClient(intents=intents)
 
 @client.event
 async def on_ready():
-    print(f'Logged in as {client.user} (ID: {client.user.id})')
-    print('------')
+    logging.info(f'Logged in as {client.user} (ID: {client.user.id})')
     release = os.getenv("RELEASE")
     if(release == "True"):
-        print("Release mode")
+        logging.info("Release mode")
         for guild in client.guilds:
             client.tree.copy_global_to(guild=guild)
             await client.tree.sync(guild=guild)
     else: 
+        logging.info("Development mode")
         client.tree.copy_global_to(guild=MY_GUILD)
         await client.tree.sync(guild=MY_GUILD)
 
 
 @client.tree.command()
-async def hello(interaction: discord.Interaction):
-    """Says hello!"""
-    await interaction.response.send_message(f'Hi, {interaction.user.mention}')
-
-
-@client.tree.command()
 @app_commands.describe(
-    first_value='The first value you want to add something to',
-    second_value='The value you want to add to the first value',
-)
-async def add(interaction: discord.Interaction, first_value: int, second_value: int):
-    """Adds two numbers together."""
-    await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
-
-
-# The rename decorator allows us to change the display of the parameter on Discord.
-# In this example, even though we use `text_to_send` in the code, the client will use `text` instead.
-# Note that other decorators will still refer to it as `text_to_send` in the code.
-@client.tree.command()
-@app_commands.rename(text_to_send='text')
-@app_commands.describe(text_to_send='Text to send in the current channel')
-async def send(interaction: discord.Interaction, text_to_send: str):
-    """Sends the text into the current channel."""
-    await interaction.response.send_message(text_to_send)
-
-
-# To make an argument optional, you can either give it a supported default argument
-# or you can mark it as Optional from the typing standard library. This example does both.
-@client.tree.command()
-@app_commands.describe(member='The member you want to get the joined date from; defaults to the user who uses the command')
-async def joined(interaction: discord.Interaction, member: Optional[discord.Member] = None):
-    """Says when a member joined."""
-    # If no member is explicitly provided then we use the command user here
-    member = member or interaction.user
-
-    # The format_dt function formats the date time into a human readable representation in the official client
-    await interaction.response.send_message(f'{member} joined {discord.utils.format_dt(member.joined_at)}')
-
-
-# A Context Menu command is an app command that can be run on a member or on a message by
-# accessing a menu within the client, usually via right clicking.
-# It always takes an interaction as its first parameter and a Member or Message as its second parameter.
-
-# This context menu command only works on members
-@client.tree.context_menu(name='Show Join Date')
-async def show_join_date(interaction: discord.Interaction, member: discord.Member):
-    # The format_dt function formats the date time into a human readable representation in the official client
-    await interaction.response.send_message(f'{member} joined at {discord.utils.format_dt(member.joined_at)}')
-
-@client.tree.command()
-@app_commands.describe(
-    remindmein='Le temps dans lequel je dois vous rappeler',
-    message='Le message que je dois vous rappeler'
+    remindmein='In how many time I shall remind you (#d#h#min#s)',
+    message='The message I shall remind you with'
 )
 async def remind_me(interaction: discord.Interaction, remindmein: str, message: Optional[str] = None):
     """Reminds you with a message after a certain amount of time."""
@@ -141,33 +98,74 @@ async def remind_me(interaction: discord.Interaction, remindmein: str, message: 
 
         return total_seconds
 
-    # Check if the time string contains colons
-    if ':' in remindmein:
-        remindmein_seconds = parse_time_string_colon_format(remindmein)
-    else:
-        remindmein_seconds = parse_time_string(remindmein)
-    remindmein_seconds = parse_time_string(remindmein)
     def format_time_string(seconds: int) -> str:
         days, seconds = divmod(seconds, 86400)
         hours, seconds = divmod(seconds, 3600)
         minutes, seconds = divmod(seconds, 60)
         return f'{days}:{hours:02}:{minutes:02}:{seconds:02}'
 
-    formatted_time = format_time_string(remindmein_seconds)
-    if(message == None):
-        await interaction.response.send_message(f'Je vais vous rappeler dans {formatted_time} secondes', ephemeral=True, silent=True)
+    # Check if the time string contains colons
+    if ':' in remindmein:
+        remindmein_seconds = parse_time_string_colon_format(remindmein)
     else:
-        await interaction.response.send_message(f'Je vais vous rappeler dans {formatted_time} secondes avec le message : {message}', ephemeral=True, silent=True)
-    
+        remindmein_seconds = parse_time_string(remindmein)
+
+    formatted_time = format_time_string(remindmein_seconds)
+
+
+    if(message == None):
+        await interaction.response.send_message(f'I will remind you in {formatted_time}', ephemeral=True, silent=True)
+        logging.info(f"{interaction.user.mention} used remind me for {formatted_time}")
+    else:
+        await interaction.response.send_message(f'I will remind you in {formatted_time} with the message: {message}', ephemeral=True, silent=True)
+        logging.info(f"{interaction.user.mention} used remind me for {formatted_time} with message {message}")
+        
     await asyncio.sleep(remindmein_seconds)
 
     if(message == None):
-        await interaction.user.send(f"{interaction.user.mention} vous m'avez demander de vous rappeler maintenant")
+        await interaction.user.send(f"{interaction.user.mention} you asked me to remind you now")
+        logging.info(f"{interaction.user.mention} ended reminder")
     else:
-        await interaction.user.send(f"{interaction.user.mention} vous m'avez demander de vous rappeler: {message}")
-    
-    
-    
+        await interaction.user.send(f"{interaction.user.mention} you asked me to remind you: {message}")
+        logging.info(f"{interaction.user.mention} ended reminder with message {message}")
 
 
-client.run(os.getenv('DISCORD_TOKEN'))
+@client.tree.command()
+@app_commands.describe(
+    member='The member you want to get information about'
+)
+async def member_info(interaction: discord.Interaction, member: Optional[discord.Member] = None):
+    """Displays information about a member."""
+    member = member or interaction.user
+
+    logging.info(f"{interaction.user.mention} used member info for {member}")
+
+    embed = discord.Embed(title=f"Information for {member}", color=discord.Color.blue())
+    embed.set_thumbnail(url=member.avatar.url)
+    embed.add_field(name="Username", value=member.name, inline=True)
+    embed.add_field(name="Discriminator", value=member.discriminator, inline=True)
+    embed.add_field(name="ID", value=member.id, inline=True)
+    embed.add_field(name="Status", value=member.status, inline=True)
+    embed.add_field(name="Top Role", value=member.top_role.mention, inline=True)
+    embed.add_field(name="Joined Server", value=discord.utils.format_dt(member.joined_at), inline=True)
+    embed.add_field(name="Joined Discord", value=discord.utils.format_dt(member.created_at), inline=True)
+
+    await interaction.response.send_message(embed=embed)
+    
+@client.tree.command()
+async def bot_info(interaction: discord.Interaction):
+    """Displays information about the bot."""
+
+    logging.info(f"{interaction.user.mention} used bot info")
+    embed = discord.Embed(title="Bot Information", color=discord.Color.green())
+    embed.set_thumbnail(url=client.user.avatar.url)
+    embed.add_field(name="Bot Name", value=client.user.name, inline=True)
+    embed.add_field(name="Bot ID", value=client.user.id, inline=True)
+    embed.add_field(name="Servers", value=len(client.guilds), inline=True)
+    embed.add_field(name="Users", value=sum(guild.member_count for guild in client.guilds), inline=True)
+    embed.add_field(name="Latency", value=f"{client.latency * 1000:.2f} ms", inline=True)
+
+    await interaction.response.send_message(embed=embed)
+
+
+client.run(os.getenv('DISCORD_TOKEN'), log_handler=handler, log_level=logging.INFO)
