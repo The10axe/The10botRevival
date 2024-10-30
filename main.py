@@ -58,11 +58,11 @@ client = MyClient(intents=intents)
 async def on_ready():
     logging.info(f'Logged in as {client.user} (ID: {client.user.id})')
     release = os.getenv("RELEASE")
+
     if(release == "True"):
         logging.info("Release mode")
-        for guild in client.guilds:
-            client.tree.copy_global_to(guild=guild)
-            await client.tree.sync(guild=guild)
+        list = await client.tree.sync()
+        logging.info(f'Synced : {len(list)} global commands')
     else: 
         logging.info("Development mode")
         client.tree.copy_global_to(guild=MY_GUILD)
@@ -71,7 +71,7 @@ async def on_ready():
 
 @client.tree.command()
 @app_commands.describe(
-    remindmein='In how many time I shall remind you (#d#h#min#s)',
+    countdown='Amount of time I shall remind you in (#d#h#min#s)',
     message='The message I shall remind you with'
 )
 async def remind_me(interaction: discord.Interaction, remindmein: str, message: Optional[str] = None):
@@ -173,6 +173,5 @@ async def bot_info(interaction: discord.Interaction):
     embed.add_field(name="Latency", value=f"{client.latency * 1000:.2f} ms", inline=True)
 
     await interaction.response.send_message(embed=embed)
-
 
 client.run(os.getenv('DISCORD_TOKEN'), log_handler=logger, log_level=logging.INFO)
