@@ -16,8 +16,13 @@ load_dotenv()
 MY_GUILD = discord.Object(id=int(os.getenv('DISCORD_HOME_GUILD')))  # replace with your guild id
 
 log_filename = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-handler = logging.FileHandler(filename=f'{log_filename}.log', encoding='utf-8', mode='w')
-
+dt_fmt = '%Y-%m-%d %H:%M:%S'
+formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
+file_handler = logging.FileHandler(filename=f'log/{log_filename}.log', encoding='utf-8', mode='w')
+console_handler = logging.StreamHandler()
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+logger = logging.basicConfig(level=logging.INFO, handlers=[file_handler, console_handler])
 
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
@@ -168,4 +173,4 @@ async def bot_info(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-client.run(os.getenv('DISCORD_TOKEN'), log_handler=handler, log_level=logging.INFO)
+client.run(os.getenv('DISCORD_TOKEN'), log_handler=logger, log_level=logging.INFO)
