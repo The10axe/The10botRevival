@@ -43,10 +43,10 @@ class MyClient(discord.Client):
     #async def on_message(self, message):
     #    print(f'Message from {message.author}: {message.content}')
 
-    async def setup_hook(self):
+    #async def setup_hook(self):
         # This copies the global commands over to your guild.
-        self.tree.copy_global_to(guild=MY_GUILD)
-        await self.tree.sync(guild=MY_GUILD)
+        #self.tree.copy_global_to(guild=MY_GUILD)
+        #await self.tree.sync(guild=MY_GUILD)
             
 
 intents = discord.Intents.default()
@@ -60,6 +60,9 @@ async def on_ready():
     release = os.getenv("RELEASE")
 
     if(release == "True"):
+        client.tree.clear_commands(guild=MY_GUILD)
+        await client.tree.sync(guild=MY_GUILD)
+        logging.info(f'Removed local commands from {client.get_guild(MY_GUILD.id).name}')
         logging.info("Release mode")
         list = await client.tree.sync()
         logging.info(f'Synced : {len(list)} global commands')
