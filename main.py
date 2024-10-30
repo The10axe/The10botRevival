@@ -74,7 +74,7 @@ async def on_ready():
     countdown='Amount of time I shall remind you in (#d#h#min#s)',
     message='The message I shall remind you with'
 )
-async def remind_me(interaction: discord.Interaction, remindmein: str, message: Optional[str] = None):
+async def remind_me(interaction: discord.Interaction, countdown: str, message: Optional[str] = None):
     """Reminds you with a message after a certain amount of time."""
     def parse_time_string(time_str: str) -> int:
         time_units = {
@@ -112,10 +112,10 @@ async def remind_me(interaction: discord.Interaction, remindmein: str, message: 
         return f'{days}:{hours:02}:{minutes:02}:{seconds:02}'
 
     # Check if the time string contains colons
-    if ':' in remindmein:
-        remindmein_seconds = parse_time_string_colon_format(remindmein)
+    if ':' in countdown:
+        remindmein_seconds = parse_time_string_colon_format(countdown)
     else:
-        remindmein_seconds = parse_time_string(remindmein)
+        remindmein_seconds = parse_time_string(countdown)
 
     formatted_time = format_time_string(remindmein_seconds)
 
