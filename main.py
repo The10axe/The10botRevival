@@ -18,6 +18,8 @@ MY_GUILD = discord.Object(id=int(os.getenv('DISCORD_HOME_GUILD')))  # replace wi
 log_filename = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 dt_fmt = '%Y-%m-%d %H:%M:%S'
 formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
+if not os.path.exists('log'):
+    os.makedirs('log')
 file_handler = logging.FileHandler(filename=f'log/{log_filename}.log', encoding='utf-8', mode='w')
 console_handler = logging.StreamHandler()
 file_handler.setFormatter(formatter)
